@@ -1,25 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="takeover_title">需要你处理</string>
-    <string name="takeover_start">我来处理</string>
-    <string name="takeover_skip">跳过</string>
-    <string name="takeover_moved">App 已放到你的屏幕上。处理好后回到这里点“处理好了”。</string>
-    <string name="takeover_here">请在手机上处理好，然后回到这里点“处理好了”。</string>
-    <string name="takeover_handled">处理好了</string>
-    <string name="takeover_done_by_user">我自己做完了</string>
-    <string name="takeover_abort">不做了</string>
-    <string name="takeover_kind_login">登录</string>
-    <string name="takeover_kind_captcha">验证码</string>
-    <string name="takeover_kind_payment">付款</string>
-    <string name="takeover_kind_secure_page">安全页面</string>
-    <string name="takeover_kind_choose">需要你选</string>
-    <string name="takeover_kind_other">其他</string>
-    <string name="tool_hand_to_user">交给你处理</string>
-    <string name="agent_screen_setting">在后台屏操作 App</string>
-    <string name="agent_screen_setting_desc">有 Shizuku 时，智能体在看不见的后台屏上打开和操作 App，不占用你的屏幕</string>
-    <string name="agent_preview_working">智能体正在后台屏操作</string>
-    <string name="agent_preview_open">点开查看</string>
-    <string name="agent_preview_take_over">我来接管</string>
-    <string name="agent_preview_taken">已放到你的屏幕上</string>
-    <string name="agent_preview_close">关闭</string>
+    <string name="takeover_title">Requiere tu atención</string>
+    <string name="takeover_start">Me encargo yo</string>
+    <string name="takeover_skip">Omitir</string>
+    <string name="takeover_moved">La app ya está en tu pantalla. Cuando termines, vuelve aquí y toca \"Listo\".</string>
+    <string name="takeover_here">Por favor, resuélvelo en el teléfono y luego vuelve aquí y toca \"Listo\".</string>
+    <string name="takeover_handled">Listo</string>
+    <string name="takeover_done_by_user">Ya lo terminé yo</string>
+    <string name="takeover_abort">Cancelar</string>
+    <string name="takeover_kind_login">Iniciar sesión</string>
+    <string name="takeover_kind_captcha">Captcha</string>
+    <string name="takeover_kind_payment">Pago</string>
+    <string name="takeover_kind_secure_page">Página protegida</string>
+    <string name="takeover_kind_choose">Tu elección</string>
+    <string name="takeover_kind_other">Otro</string>
+    <string name="tool_hand_to_user">Pasar a ti</string>
+    <string name="agent_screen_setting">Operar apps en pantalla secundaria</string>
+    <string name="agent_screen_setting_desc">Con Shizuku, el agente abre y opera las apps en una pantalla invisible propia sin ocupar tu pantalla</string>
+    <string name="agent_preview_working">El agente está trabajando en su pantalla</string>
+    <string name="agent_preview_open">Toca para ver</string>
+    <string name="agent_preview_take_over">Tomar el control</string>
+    <string name="agent_preview_taken">Movido a tu pantalla</string>
+    <string name="agent_preview_close">Cerrar</string>
 </resources>

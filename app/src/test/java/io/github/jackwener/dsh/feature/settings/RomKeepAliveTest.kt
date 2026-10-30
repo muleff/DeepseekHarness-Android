@@ -73,7 +73,7 @@ class RomKeepAliveTest {
             for (k in RomKeepAlive.kinds(v)) {
                 assertTrue("$v $k", RomKeepAlive.targets(v, k).isNotEmpty())
                 assertTrue(RomKeepAlive.targets(v, k).all { it.cls == null || it.pkg != null })
-                assertTrue(RomKeepAlive.hint(v, k).zh.isNotBlank() && RomKeepAlive.hint(v, k).en.isNotBlank())
+                assertTrue(RomKeepAlive.hint(v, k).zh.isNotBlank() && RomKeepAlive.hint(v, k).en.isNotBlank() && RomKeepAlive.hint(v, k).es.isNotBlank())
             }
         }
     }

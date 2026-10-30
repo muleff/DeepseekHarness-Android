@@ -231,29 +231,29 @@ fun RuleDetailScreen(onBack: () -> Unit, onOpenSession: (String) -> Unit, vm: Au
 }
 
 fun describeTrigger(t: Trigger, zh: Boolean): String = when (t) {
-    is Trigger.Time -> t.at?.let { (if (zh) "每天 " else "Daily ") + it + if (t.days.isNotEmpty()) " (${t.days.joinToString(if (zh) "、" else ", ") { weekday(it, zh) }})" else "" }
-        ?: t.everyMinutes?.let { if (zh) "每 $it 分钟" else "Every $it min" }
-        ?: t.onceAtEpochMs?.let { (if (zh) "单次 · " else "Once · ") + Fmt.dateTime(it) } ?: (if (zh) "单次" else "Once")
-    is Trigger.Wifi -> (if (t.connected) (if (zh) "连上 Wi‑Fi" else "Wi‑Fi connected") else (if (zh) "断开 Wi‑Fi" else "Wi‑Fi disconnected")) + (t.ssid?.let { " $it" } ?: "")
-    is Trigger.Bluetooth -> (if (t.connected) (if (zh) "蓝牙连接" else "Bluetooth connected") else (if (zh) "蓝牙断开" else "Bluetooth disconnected")) + (t.deviceName?.let { " $it" } ?: "")
-    is Trigger.Power -> if (t.connected) (if (zh) "开始充电" else "Charger connected") else (if (zh) "拔掉充电器" else "Charger removed")
-    is Trigger.BatteryLow -> (if (zh) "电量降到 " else "Battery at ") + "${t.percent}%"
-    is Trigger.Headset -> if (t.plugged) (if (zh) "插入耳机" else "Headset plugged") else (if (zh) "拔出耳机" else "Headset unplugged")
-    is Trigger.Screen -> when (t.event) { "on" -> if (zh) "屏幕点亮" else "Screen on"; "off" -> if (zh) "屏幕关闭" else "Screen off"; else -> if (zh) "解锁手机" else "Phone unlocked" }
-    is Trigger.Notification -> (if (zh) "收到通知 " else "Notification ") + listOfNotNull(t.packageName, t.keyword).joinToString(" · ")
-    is Trigger.AppOpened -> (if (zh) "打开 " else "Opened ") + t.packageName
-    is Trigger.Geofence -> (if (t.enter) (if (zh) "到达" else "Arrive") else (if (zh) "离开" else "Leave")) + " ${"%.4f".format(t.lat)},${"%.4f".format(t.lng)}"
+    is Trigger.Time -> t.at?.let { (if (zh) "每天 " else "Diariamente ") + it + if (t.days.isNotEmpty()) " (${t.days.joinToString(if (zh) "、" else ", ") { weekday(it, zh) }})" else "" }
+        ?: t.everyMinutes?.let { if (zh) "每 $it 分钟" else "Cada $it min" }
+        ?: t.onceAtEpochMs?.let { (if (zh) "单次 · " else "Una vez · ") + Fmt.dateTime(it) } ?: (if (zh) "单次" else "Una vez")
+    is Trigger.Wifi -> (if (t.connected) (if (zh) "连上 Wi‑Fi" else "Wi‑Fi conectado") else (if (zh) "断开 Wi‑Fi" else "Wi‑Fi desconectado")) + (t.ssid?.let { " $it" } ?: "")
+    is Trigger.Bluetooth -> (if (t.connected) (if (zh) "蓝牙连接" else "Bluetooth conectado") else (if (zh) "蓝牙断开" else "Bluetooth desconectado")) + (t.deviceName?.let { " $it" } ?: "")
+    is Trigger.Power -> if (t.connected) (if (zh) "开始充电" else "Cargador conectado") else (if (zh) "拔掉充电器" else "Cargador desconectado")
+    is Trigger.BatteryLow -> (if (zh) "电量降到 " else "Batería al ") + "${t.percent}%"
+    is Trigger.Headset -> if (t.plugged) (if (zh) "插入耳机" else "Auriculares conectados") else (if (zh) "拔出耳机" else "Auriculares desconectados")
+    is Trigger.Screen -> when (t.event) { "on" -> if (zh) "屏幕点亮" else "Pantalla encendida"; "off" -> if (zh) "屏幕关闭" else "Pantalla apagada"; else -> if (zh) "解锁手机" else "Teléfono desbloqueado" }
+    is Trigger.Notification -> (if (zh) "收到通知 " else "Notificación ") + listOfNotNull(t.packageName, t.keyword).joinToString(" · ")
+    is Trigger.AppOpened -> (if (zh) "打开 " else "Abierta ") + t.packageName
+    is Trigger.Geofence -> (if (t.enter) (if (zh) "到达" else "Llegar a") else (if (zh) "离开" else "Salir de")) + " ${"%.4f".format(t.lat)},${"%.4f".format(t.lng)}"
 }
 
 fun describeCondition(c: Condition, zh: Boolean): String = when (c) {
-    is Condition.TimeRange -> (if (zh) "时间 " else "Time ") + "${c.from}–${c.to}"
-    is Condition.Days -> (if (zh) "星期" else "Days ") + c.days.joinToString(if (zh) "、" else ", ") { weekday(it, zh) }
-    is Condition.Battery -> (if (zh) "电量 " else "Battery ") + listOfNotNull(c.min?.let { "≥$it%" }, c.max?.let { "≤$it%" }).joinToString(" ")
-    is Condition.Charging -> if (c.charging) (if (zh) "充电中" else "Charging") else (if (zh) "未充电" else "Not charging")
+    is Condition.TimeRange -> (if (zh) "时间 " else "Hora ") + "${c.from}–${c.to}"
+    is Condition.Days -> (if (zh) "星期" else "Días ") + c.days.joinToString(if (zh) "、" else ", ") { weekday(it, zh) }
+    is Condition.Battery -> (if (zh) "电量 " else "Batería ") + listOfNotNull(c.min?.let { "≥$it%" }, c.max?.let { "≤$it%" }).joinToString(" ")
+    is Condition.Charging -> if (c.charging) (if (zh) "充电中" else "Cargando") else (if (zh) "未充电" else "No cargando")
 }
 
-/** 1 = Monday … 7 = Sunday (ISO), as 一…日 / Mon…Sun. */
+/** 1 = Monday … 7 = Sunday (ISO), as 一…日 / Lun…Dom. */
 private fun weekday(d: Int, zh: Boolean): String =
     runCatching { java.time.DayOfWeek.of(d) }.getOrNull()?.let {
-        if (zh) "一二三四五六日"[it.value - 1].toString() else it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale.ENGLISH)
+        if (zh) "一二三四五六日"[it.value - 1].toString() else it.getDisplayName(java.time.format.TextStyle.SHORT, java.util.Locale("es"))
     } ?: d.toString()

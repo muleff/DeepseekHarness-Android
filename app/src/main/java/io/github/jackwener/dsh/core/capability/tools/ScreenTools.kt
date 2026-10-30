@@ -91,9 +91,18 @@ class ScreenTools @Inject constructor(
     /** A live snapshot with stable ids assigned. */
     private class Read(val snap: ScreenSnapshot, val frame: Frame)
 
-    private fun svc() = DshAccessibilityService.instance ?: throw PermissionMissingException("Accessibility service (DSH screen control)")
+    private suspend fun svc(): DshAccessibilityService {
+        DshAccessibilityService.instance?.let { return it }
+        if (io.github.jackwener.dsh.feature.settings.PermissionCatalog.isA11yEnabled(context)) {
+            for (i in 0 until 15) {
+                delay(100)
+                DshAccessibilityService.instance?.let { return it }
+            }
+        }
+        throw PermissionMissingException("Accessibility service (DSH screen control)")
+    }
 
-    private fun read(call: CallContext, d: Int): Read {
+    private suspend fun read(call: CallContext, d: Int): Read {
         val snap = svc().snapshot(d)
         return Read(snap, view(call, d).ids.assign(snap.packageName, snap.elements))
     }
@@ -161,7 +170,7 @@ class ScreenTools @Inject constructor(
 
     private suspend fun screenshot(t: ScreenTarget): Bitmap? =
         if (t.agent) agent.frame(t.displayId)?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-        else DshAccessibilityService.instance?.let { capture(it, t.displayId).bitmap }
+        else (runCatching { svc() }.getOrNull() ?: DshAccessibilityService.instance)?.let { capture(it, t.displayId).bitmap }
 
     /** Accessibility screenshot, retried once when the previous one was less than a second ago. */
     private suspend fun capture(a11y: DshAccessibilityService, d: Int): DshAccessibilityService.Capture {
@@ -444,7 +453,7 @@ class ScreenTools @Inject constructor(
             }
 
             private suspend fun tapAt(x: Float, y: Float, long: Boolean, d: Int): Boolean {
-                val a11y = DshAccessibilityService.instance
+                val a11y = runCatching { svc() }.getOrNull() ?: DshAccessibilityService.instance
                 return if (a11y != null) a11y.tap(x, y, if (long) 700 else 60, d)
                 else if (shizuku.available) shizuku.exec(if (long) "input -d $d swipe ${x.toInt()} ${y.toInt()} ${x.toInt()} ${y.toInt()} 700"
                     else "input -d $d tap ${x.toInt()} ${y.toInt()}").code == 0
@@ -473,7 +482,7 @@ class ScreenTools @Inject constructor(
                     (out.fieldText?.let { "; the field now shows: \"${it.take(300)}\"" } ?: "")).joinToString("\n"), watch)
             }
 
-            private fun focusedInput(d: Int, r: Read): AccessibilityNodeInfo? =
+            private suspend fun focusedInput(d: Int, r: Read): AccessibilityNodeInfo? =
                 if (d == Display.DEFAULT_DISPLAY) svc().findFocus(AccessibilityNodeInfo.FOCUS_INPUT)
                 else r.snap.nodes.firstOrNull { it.isEditable && it.isFocused }
         },
@@ -596,7 +605,7 @@ class ScreenTools @Inject constructor(
     /** Enter/Search in the focused field: accessibility IME action, DSH keyboard, then Shizuku keyevent. Returns how, or null. */
     private suspend fun pressEnter(search: Boolean, d: Int, r: Read): String? {
         if (d == Display.DEFAULT_DISPLAY) {
-            if (DshAccessibilityService.instance?.pressImeAction(search) == true) return if (search) "Search" else "Enter"
+            if ((runCatching { svc() }.getOrNull() ?: DshAccessibilityService.instance)?.pressImeAction(search) == true) return if (search) "Search" else "Enter"
         } else if (Build.VERSION.SDK_INT >= 30) {
             // The agent screen has its own focus: act on its focused field directly.
             val f = r.snap.nodes.firstOrNull { it.isEditable && it.isFocused }

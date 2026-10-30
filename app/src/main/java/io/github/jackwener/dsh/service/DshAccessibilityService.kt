@@ -31,38 +31,77 @@ class DshAccessibilityService : AccessibilityService() {
     /** One shared thread for screenshot callbacks (a new executor per capture leaked a thread each time). */
     private val shotExecutor = Executors.newSingleThreadExecutor()
 
-    override fun onServiceConnected() { instance = this }
-    override fun onUnbind(intent: android.content.Intent?): Boolean { instance = null; return super.onUnbind(intent) }
-    override fun onDestroy() { if (instance === this) instance = null; shotExecutor.shutdown(); super.onDestroy() }
+    override fun onCreate() {
+        super.onCreate()
+        instance = this
+    }
+
+    override fun onServiceConnected() {
+        super.onServiceConnected()
+        instance = this
+        runCatching {
+            if (Build.VERSION.SDK_INT >= 33) {
+                serviceInfo?.let { info ->
+                    info.flags = info.flags or android.accessibilityservice.AccessibilityServiceInfo.FLAG_INPUT_METHOD_EDITOR
+                    serviceInfo = info
+                }
+            }
+        }
+    }
+
+    override fun onRebind(intent: android.content.Intent?) {
+        super.onRebind(intent)
+        instance = this
+    }
+
+    override fun onUnbind(intent: android.content.Intent?): Boolean {
+        instance = null
+        return true
+    }
+
+    override fun onDestroy() {
+        if (instance === this) instance = null
+        shotExecutor.shutdown()
+        super.onDestroy()
+    }
+
     override fun onInterrupt() {}
 
-    override fun onAccessibilityEvent(event: AccessibilityEvent) {
-        // A click on the user's own screen: what opens there next is the user's doing (AgentScreen.pullBack).
-        if (event.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED) {
-            val pkg = event.packageName?.toString()
-            if (pkg != packageName && clickedOnMain(event, pkg)) lastMainClickAt = android.os.SystemClock.elapsedRealtime()
-            return
+    override fun onAccessibilityEvent(event: AccessibilityEvent?) {
+        if (event == null) return
+        try {
+            // A click on the user's own screen: what opens there next is the user's doing (AgentScreen.pullBack).
+            if (event.eventType == AccessibilityEvent.TYPE_VIEW_CLICKED) {
+                val pkg = event.packageName?.toString()
+                if (pkg != packageName && clickedOnMain(event, pkg)) lastMainClickAt = android.os.SystemClock.elapsedRealtime()
+                return
+            }
+            if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
+            val pkg = event.packageName?.toString() ?: return
+            if (pkg == packageName || pkg == _foreground.value || pkg == SYSTEM_UI || pkg in imePackages()) return
+            // Only a real app window counts as "opened": dialogs, the shade, keyboards and overlays from
+            // other packages also send state changes.
+            val active = runCatching { windows.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION && (it.isActive || it.isFocused) } }.getOrNull()
+            val activePkg = runCatching { active?.root?.packageName?.toString() }.getOrNull()
+            if (activePkg != null && activePkg != pkg) return
+            _foreground.value = pkg
+            TriggerEvents.appOpened(pkg)
+        } catch (e: Throwable) {
+            android.util.Log.e("DshA11y", "error in onAccessibilityEvent", e)
         }
-        if (event.eventType != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) return
-        val pkg = event.packageName?.toString() ?: return
-        if (pkg == packageName || pkg == _foreground.value || pkg == SYSTEM_UI || pkg in imePackages()) return
-        // Only a real app window counts as "opened": dialogs, the shade, keyboards and overlays from
-        // other packages also send state changes.
-        val active = runCatching { windows.firstOrNull { it.type == AccessibilityWindowInfo.TYPE_APPLICATION && (it.isActive || it.isFocused) } }.getOrNull()
-        val activePkg = active?.root?.packageName?.toString()
-        if (activePkg != null && activePkg != pkg) return
-        _foreground.value = pkg
-        TriggerEvents.appOpened(pkg)
     }
 
     /** The event's display is API 33+; before that, a click counts as the user's when its app has a window on the main screen. */
-    private fun clickedOnMain(event: AccessibilityEvent, pkg: String?): Boolean = when {
-        Build.VERSION.SDK_INT >= 33 -> event.displayId == Display.DEFAULT_DISPLAY
-        Build.VERSION.SDK_INT >= 30 -> runCatching {
-            windowsOnAllDisplays.get(Display.DEFAULT_DISPLAY).orEmpty().any { it.root?.packageName?.toString() == pkg }
-        }.getOrDefault(false)
-        else -> false
-    }
+    private fun clickedOnMain(event: AccessibilityEvent, pkg: String?): Boolean = runCatching {
+        when {
+            Build.VERSION.SDK_INT >= 33 -> event.displayId == Display.DEFAULT_DISPLAY
+            Build.VERSION.SDK_INT >= 30 ->
+                windowsOnAllDisplays.get(Display.DEFAULT_DISPLAY).orEmpty().any {
+                    runCatching { it.root?.packageName?.toString() }.getOrNull() == pkg
+                }
+            else -> false
+        }
+    }.getOrDefault(false)
 
     private fun imePackages(): Set<String> = runCatching {
         getSystemService(InputMethodManager::class.java).enabledInputMethodList.map { it.packageName }.toSet()
@@ -82,7 +121,18 @@ class DshAccessibilityService : AccessibilityService() {
             root?.let { walk(it, 0, false, nodes, elements) }
             return ScreenSnapshot(displayId, root?.packageName?.toString(), elements, nodes)
         }
-        val wins = windowsOnAllDisplays.get(displayId).orEmpty().mapNotNull { w -> w.root?.let { w to it } }
+        val wins = runCatching {
+            windowsOnAllDisplays.get(displayId).orEmpty().mapNotNull { w ->
+                runCatching { w.root?.let { w to it } }.getOrNull()
+            }
+        }.getOrDefault(emptyList())
+
+        if (wins.isEmpty()) {
+            val root = rootInActiveWindow
+            root?.let { walk(it, 0, false, nodes, elements) }
+            return ScreenSnapshot(displayId, root?.packageName?.toString(), elements, nodes)
+        }
+
         val apps = wins.filter { it.first.type == AccessibilityWindowInfo.TYPE_APPLICATION }
         val others = apps.filter { it.second.packageName?.toString() != packageName }
         val shownApps = (others.ifEmpty { apps }).sortedByDescending { it.first.isActive || it.first.isFocused }
@@ -193,9 +243,10 @@ class DshAccessibilityService : AccessibilityService() {
 
     /** The app in front of [displayId], from its window list only (no tree walk). */
     fun packageOn(displayId: Int): String? {
-        if (Build.VERSION.SDK_INT < 30) return null
+        if (Build.VERSION.SDK_INT < 30) return rootInActiveWindow?.packageName?.toString()
         val apps = runCatching { windowsOnAllDisplays.get(displayId).orEmpty() }.getOrDefault(emptyList()).filter { it.type == AccessibilityWindowInfo.TYPE_APPLICATION }
-        return (apps.firstOrNull { it.isActive || it.isFocused } ?: apps.firstOrNull())?.root?.packageName?.toString()
+        val candidate = apps.firstOrNull { it.isActive || it.isFocused } ?: apps.firstOrNull()
+        return runCatching { candidate?.root?.packageName?.toString() }.getOrNull() ?: rootInActiveWindow?.packageName?.toString()
     }
 
     /**

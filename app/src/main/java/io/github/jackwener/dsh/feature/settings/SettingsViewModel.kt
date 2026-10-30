@@ -140,20 +140,20 @@ class SettingsViewModel @Inject constructor(
             shellStateLabel(context, shell), shellFixIntent(shizuku.access, shell, shizukuInstaller.bundled))
         val signedIn = account.signedIn
         val third = settings.value.choice.provider
-        checks += DoctorCheck(if (zh) "模型凭据" else "Model credential", hasKey || signedIn || third != null, when {
+        checks += DoctorCheck(if (zh) "模型凭据" else "Credencial del modelo", hasKey || signedIn || third != null, when {
             third != null -> third.name + " / " + settings.value.choice.model
             hasKey -> "API Key " + (maskedKey ?: "")
-            signedIn -> if (zh) "DeepSeek 账号" else "DeepSeek account"
-            else -> if (zh) "未登录，也未设置 API Key" else "Not signed in, no API key"
+            signedIn -> if (zh) "DeepSeek 账号" else "Cuenta DeepSeek"
+            else -> if (zh) "未登录，也未设置 API Key" else "Sin iniciar sesión ni API Key configurada"
         })
         val engineDetail = when (val s = engine.state.value) {
-            EngineState.Ready -> (if (zh) "运行中，启动用时 " else "Running, started in ") + "${engine.startupMillis} ms"
+            EngineState.Ready -> (if (zh) "运行中，启动用时 " else "En ejecución, tiempo de inicio ") + "${engine.startupMillis} ms"
             is EngineState.Failed -> s.message
-            else -> if (zh) "空闲（按需启动）" else "Idle (starts on demand)"
+            else -> if (zh) "空闲（按需启动）" else "Inactivo (inicia bajo demanda)"
         }
-        checks += DoctorCheck(if (zh) "Agent 引擎" else "Agent engine", engine.state.value !is EngineState.Failed, engineDetail)
-        checks += DoctorCheck(if (zh) "存储空间" else "Storage", (context.filesDir.usableSpace > 500_000_000L),
-            "${context.filesDir.usableSpace / 1_000_000} MB free")
+        checks += DoctorCheck(if (zh) "Agent 引擎" else "Motor del agente", engine.state.value !is EngineState.Failed, engineDetail)
+        checks += DoctorCheck(if (zh) "存储空间" else "Almacenamiento", (context.filesDir.usableSpace > 500_000_000L),
+            "${context.filesDir.usableSpace / 1_000_000} MB libres")
         checks += withContext(Dispatchers.IO) { ReliabilityDoctor.checks(context, zh) }
         doctor.value = checks
     }

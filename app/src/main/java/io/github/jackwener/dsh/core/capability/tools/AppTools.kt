@@ -56,7 +56,7 @@ class AppTools @Inject constructor(
 
     /** Android drops (without an error) activity starts from a background app unless one of these exempts DSH. */
     private fun mayStartFromBackground(): Boolean = AppVisibility.isForeground || Settings.canDrawOverlays(context) ||
-        DshAccessibilityService.instance != null ||
+        DshAccessibilityService.instance != null || io.github.jackwener.dsh.feature.settings.PermissionCatalog.isA11yEnabled(context) ||
         runCatching { context.getSystemService(android.app.role.RoleManager::class.java).isRoleHeld(android.app.role.RoleManager.ROLE_ASSISTANT) }.getOrDefault(false)
 
     private class LaunchBlocked(message: String) : Exception(message)

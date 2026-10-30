@@ -17,7 +17,7 @@ object RomKeepAlive {
 
     data class Rom(val vendor: Vendor, val os: String?) {
         fun label(zh: Boolean): String {
-            val v = vendor.label(zh).ifEmpty { if (zh) "Android 设备" else "Android device" }
+            val v = vendor.label(zh).ifEmpty { if (zh) "Android 设备" else "Dispositivo Android" }
             return if (os.isNullOrBlank()) v else "$v · $os"
         }
     }
@@ -35,8 +35,8 @@ object RomKeepAlive {
         val labelExtras: List<String> = emptyList(),
     )
 
-    data class Hint(val zh: String, val en: String) {
-        fun text(zh: Boolean) = if (zh) this.zh else en
+    data class Hint(val zh: String, val en: String, val es: String = en) {
+        fun text(zh: Boolean) = if (zh) this.zh else es
     }
 
     // Props: MIUI/HyperOS, EMUI/HarmonyOS/MagicOS, ColorOS, OxygenOS, realme UI, vivo, One UI, Flyme.
@@ -183,36 +183,51 @@ object RomKeepAlive {
 
     /** What to switch on the screen we open (or on App info when nothing vendor-specific opens). */
     fun hint(vendor: Vendor, kind: Kind): Hint = when (kind) {
-        Kind.Battery -> Hint("允许“不受电池优化限制”，锁屏后也能执行任务", "Allow ignoring battery optimisation so tasks run while locked")
+        Kind.Battery -> Hint("允许“不受电池优化限制”，锁屏后也能执行任务", "Allow ignoring battery optimisation so tasks run while locked",
+            "Permitir \"Sin restricciones\" en optimización de batería para ejecutar tareas con la pantalla bloqueada")
         Kind.AutoStart -> when (vendor) {
-            Vendor.Xiaomi -> Hint("自启动 → 打开 DSH", "Autostart → turn DSH on")
+            Vendor.Xiaomi -> Hint("自启动 → 打开 DSH", "Autostart → turn DSH on", "Inicio automático → Activar DSH")
             Vendor.Huawei, Vendor.Honor -> Hint("应用启动管理 → DSH → 关闭“自动管理”，允许自启动、关联启动、后台活动",
-                "App launch → DSH → turn off Manage automatically, allow auto-launch, secondary launch and run in background")
-            Vendor.Oppo, Vendor.OnePlus, Vendor.Realme -> Hint("自启动管理 → 允许 DSH 自启动", "Auto launch → allow DSH")
-            Vendor.Vivo -> Hint("后台启动管理 / 自启动 → 允许 DSH", "Background startup / Autostart → allow DSH")
-            Vendor.Meizu -> Hint("权限管理 → 后台管理 / 自启动 → 允许后台运行", "Permissions → background management / autostart → allow")
-            else -> Hint("此系统无单独的自启动开关", "This system has no separate autostart switch")
+                "App launch → DSH → turn off Manage automatically, allow auto-launch, secondary launch and run in background",
+                "Inicio de aplicaciones → DSH → Desactivar \"Gestionar automáticamente\", permitir inicio automático, secundario y actividad en segundo plano")
+            Vendor.Oppo, Vendor.OnePlus, Vendor.Realme -> Hint("自启动管理 → 允许 DSH 自启动", "Auto launch → allow DSH",
+                "Gestión de inicio automático → Permitir DSH")
+            Vendor.Vivo -> Hint("后台启动管理 / 自启动 → 允许 DSH", "Background startup / Autostart → allow DSH",
+                "Inicio en segundo plano / Autoinicio → Permitir DSH")
+            Vendor.Meizu -> Hint("权限管理 → 后台管理 / 自启动 → 允许后台运行", "Permissions → background management / autostart → allow",
+                "Permisos → Gestión en segundo plano / Autoinicio → Permitir ejecución en segundo plano")
+            else -> Hint("此系统无单独的自启动开关", "This system has no separate autostart switch",
+                "Este sistema no tiene un ajuste separado de inicio automático")
         }
         Kind.Background -> when (vendor) {
-            Vendor.Xiaomi -> Hint("省电策略 → 无限制", "Battery saver → No restrictions")
+            Vendor.Xiaomi -> Hint("省电策略 → 无限制", "Battery saver → No restrictions", "Ahorro de batería → Sin restricciones")
             Vendor.Huawei, Vendor.Honor -> Hint("电池 → 更多电池设置 → 休眠时始终保持网络连接；应用启动管理中允许后台活动",
-                "Battery → more settings → stay connected while asleep; allow background activity in App launch")
+                "Battery → more settings → stay connected while asleep; allow background activity in App launch",
+                "Batería → Más ajustes de batería → Mantener conexión al suspender; permitir actividad en segundo plano en Inicio de aplicaciones")
             Vendor.Oppo, Vendor.OnePlus, Vendor.Realme -> Hint("应用信息 → 耗电管理 → 允许完全后台行为、允许自动启动",
-                "App info → Battery usage → allow full background activity and auto launch")
-            Vendor.Vivo -> Hint("后台耗电管理 → DSH → 允许后台高耗电", "Background power consumption → DSH → allow high background usage")
-            Vendor.Samsung -> Hint("后台使用限制 → 从不休眠的应用 → 添加 DSH", "Background usage limits → Never sleeping apps → add DSH")
-            Vendor.Meizu -> Hint("后台管理 → DSH → 允许后台运行", "Background management → DSH → allow running in background")
-            else -> Hint("应用电池用量 → 不受限制", "App battery usage → Unrestricted")
+                "App info → Battery usage → allow full background activity and auto launch",
+                "Información de la app → Uso de batería → Permitir actividad completa en segundo plano e inicio automático")
+            Vendor.Vivo -> Hint("后台耗电管理 → DSH → 允许后台高耗电", "Background power consumption → DSH → allow high background usage",
+                "Consumo de batería en segundo plano → DSH → Permitir alto consumo en segundo plano")
+            Vendor.Samsung -> Hint("后台使用限制 → 从不休眠的应用 → 添加 DSH", "Background usage limits → Never sleeping apps → add DSH",
+                "Límites de uso en segundo plano → Apps que nunca entran en suspensión → Añadir DSH")
+            Vendor.Meizu -> Hint("后台管理 → DSH → 允许后台运行", "Background management → DSH → allow running in background",
+                "Gestión en segundo plano → DSH → Permitir ejecución en segundo plano")
+            else -> Hint("应用电池用量 → 不受限制", "App battery usage → Unrestricted", "Uso de batería de la app → Sin restricciones")
         }
     }
 
     /** Locking the card in Recents keeps most Chinese ROMs' one-tap cleaner from killing DSH. */
     fun recentsHint(vendor: Vendor): Hint = when (vendor) {
         Vendor.Xiaomi, Vendor.Huawei, Vendor.Honor, Vendor.Vivo, Vendor.Meizu ->
-            Hint("在最近任务中下拉 DSH 卡片加锁，一键清理时不会被结束", "In Recents, pull down the DSH card to lock it so Clear all skips it")
+            Hint("在最近任务中下拉 DSH 卡片加锁，一键清理时不会被结束", "In Recents, pull down the DSH card to lock it so Clear all skips it",
+                "En Aplicaciones recientes, desliza la tarjeta de DSH hacia abajo para bloquearla y evitar que se cierre al limpiar")
         Vendor.Oppo, Vendor.OnePlus, Vendor.Realme ->
-            Hint("在最近任务中点 DSH 卡片右上角菜单 → 锁定", "In Recents, open the DSH card menu → Lock")
-        Vendor.Samsung -> Hint("在最近任务中点 DSH 图标 → 保持打开", "In Recents, tap the DSH icon → Keep open")
-        else -> Hint("如系统支持，在最近任务中锁定 DSH", "Lock DSH in Recents if your system supports it")
+            Hint("在最近任务中点 DSH 卡片右上角菜单 → 锁定", "In Recents, open the DSH card menu → Lock",
+                "En Aplicaciones recientes, toca el menú de la tarjeta de DSH → Bloquear")
+        Vendor.Samsung -> Hint("在最近任务中点 DSH 图标 → 保持打开", "In Recents, tap the DSH icon → Keep open",
+                "En Aplicaciones recientes, toca el icono de DSH → Mantener abierta")
+        else -> Hint("如系统支持，在最近任务中锁定 DSH", "Lock DSH in Recents if your system supports it",
+                "Bloquea DSH en Aplicaciones recientes si tu sistema lo permite")
     }
 }

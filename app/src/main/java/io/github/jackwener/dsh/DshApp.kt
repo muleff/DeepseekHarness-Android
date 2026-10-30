@@ -24,6 +24,25 @@ class DshApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        runCatching {
+            val prefs = getSharedPreferences("dsh_locale_pref", android.content.Context.MODE_PRIVATE)
+            val initialized = prefs.getBoolean("default_locale_set", false)
+            if (!initialized) {
+                if (android.os.Build.VERSION.SDK_INT >= 33) {
+                    val lm = getSystemService(android.app.LocaleManager::class.java)
+                    if (lm != null && lm.applicationLocales.isEmpty) {
+                        lm.applicationLocales = android.os.LocaleList.forLanguageTags("es")
+                    }
+                }
+                val spanish = java.util.Locale("es")
+                java.util.Locale.setDefault(spanish)
+                val config = resources.configuration
+                config.setLocale(spanish)
+                @Suppress("DEPRECATION")
+                resources.updateConfiguration(config, resources.displayMetrics)
+                prefs.edit().putBoolean("default_locale_set", true).apply()
+            }
+        }
         if (!isMainProcess()) return
         Notifications.createChannels(this)
         importDebugKey()

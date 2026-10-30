@@ -112,7 +112,7 @@ class TriggerHub @Inject constructor(
             is Trigger.Wifi -> if (t.ssid != null && !(granted(Manifest.permission.ACCESS_FINE_LOCATION) && granted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)))
                 add("location 'Allow all the time' (Android hides the Wi-Fi name otherwise)")
             is Trigger.Notification -> if (context.packageName !in NotificationManagerCompat.getEnabledListenerPackages(context)) add("Notification access")
-            is Trigger.AppOpened -> if (DshAccessibilityService.instance == null) add("Accessibility service (DSH screen control)")
+            is Trigger.AppOpened -> if (DshAccessibilityService.instance == null && !io.github.jackwener.dsh.feature.settings.PermissionCatalog.isA11yEnabled(context)) add("Accessibility service (DSH screen control)")
             else -> {}
         }
     }
